@@ -13,6 +13,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   console.log("Event: ", JSON.stringify(event));
 
   const { role, movieId } = event.pathParameters || {};
+  const nameSubstring = event.queryStringParameters?.name;
 
   if (!role || !movieId) {
     return {
@@ -33,9 +34,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
   try {
     const commandOutput = await ddbDocClient.send(new QueryCommand(params));
-    console.log("Query result: ", JSON.stringify(commandOutput));
+    let names = commandOutput.Items?.map((item) => item.name) || [];
 
-    const names = commandOutput.Items?.map((item) => item.name) || [];
+    if (nameSubstring) {
+      names = names.filter((name) =>
+        name?.toLowerCase().includes(nameSubstring.toLowerCase())
+      );
+    }
 
     return {
       statusCode: 200,
